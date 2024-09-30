@@ -1,10 +1,14 @@
 import math
-import textwrap
 
+import matplotlib.pyplot as plt
 import numpy as np
 
+INITIAL_COLOUR = "blue"
+FINAL_COLOUR = "red"
+SCALING_FACTOR = 0.25
+
 # XY Coordinates
-nodes = np.array([[0, 1], [0, 0], [1, 1], [1, 0], [2, 1], [2, 0]])
+nodes = np.array([[0, 1], [0, 0], [1, 1], [1.5, 0], [2.5, 1], [3, 0]])
 
 # Start Node, End Node, EA
 elements = np.array(
@@ -25,7 +29,7 @@ elements = np.array(
 fixed_dofs = [0, 1, 4, 5]
 
 # loads applied: (x,y)
-f = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, -0.01]])
+f = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, -0.005]])
 
 
 def init_stiffness_matrix(nodes, elements):
@@ -87,14 +91,14 @@ def init_stiffness_matrix(nodes, elements):
     return N, K
 
 
-def calc_nodal_positions(K):
-    """Calculates the position of nodes after loads are applied
+def calc_nodal_displacements(K):
+    """Calculates the displacements of nodes after loads are applied
 
     Args:
         K (np.array): Global stiffness matrix
 
     Returns:
-        np.array: X and Y coordinates of each node after loads are applied
+        np.array: X and Y displacements of each node after loads are applied
     """
     n = np.size(nodes, 0)
     u = np.zeros([2 * n])
@@ -145,9 +149,47 @@ def calc_angle(node_1, node_2):
     return math.atan2(node_2[1] - node_1[1], node_2[0] - node_1[0])
 
 
+def plot_nodal_displacements(pos_init, displacement, scaling_factor):
+    pos_final = pos_init + displacement * scaling_factor
+
+    # Plot Nodes
+    plt.scatter(
+        pos_init[:, 0],
+        pos_init[:, 1],
+        color=INITIAL_COLOUR,
+        label="Undeformed",
+    )
+    plt.scatter(
+        pos_final[:, 0],
+        pos_final[:, 1],
+        color=FINAL_COLOUR,
+        label="Deformed",
+    )
+
+    # Plot Elements
+    for element in elements:
+        plt.plot(
+            [pos_init[element[0]][0], pos_init[element[1]][0]],
+            [pos_init[element[0]][1], pos_init[element[1]][1]],
+            color=INITIAL_COLOUR,
+        )
+
+        plt.plot(
+            [pos_final[element[0]][0], pos_final[element[1]][0]],
+            [pos_final[element[0]][1], pos_final[element[1]][1]],
+            color=FINAL_COLOUR,
+        )
+
+    plt.legend(loc="lower left")
+    plt.title(f"Nodal Positions, Scaling Factor = {scaling_factor: .2f}")
+
+    plt.show()
+
+
 def main():
     N, K = init_stiffness_matrix(nodes, elements)
-    u = calc_nodal_positions(K)
+    u = calc_nodal_displacements(K)
+    plot_nodal_displacements(nodes, u, SCALING_FACTOR)
 
 
 if __name__ == "__main__":
