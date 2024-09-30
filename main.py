@@ -1,3 +1,8 @@
+# Author: Sam Lehmann
+# Network with him at: https://www.linkedin.com/in/samuellehmann/
+# Date: 2024-30-09
+# Description: Finite element solver for 2D planar truss element meshes
+
 import math
 
 import matplotlib.pyplot as plt
@@ -189,6 +194,16 @@ def plot_nodal_displacements(pos_init, displacement, scaling_factor):
 def main():
     N, K = init_stiffness_matrix(nodes, elements)
     u = calc_nodal_displacements(K)
+
+    print("Stiffness Matrix, K: ")
+    print_array(K)
+
+    print("Nodal Matrix, N: ")
+    print_array(N)
+
+    print("Nodal Displacements, u: ")
+    print_array(u)
+
     plot_nodal_displacements(nodes, u, SCALING_FACTOR)
 
 
