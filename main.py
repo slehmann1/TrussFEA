@@ -22,13 +22,22 @@ elements = np.array(
 )
 
 # Nodes with their positions fixed
-fixed_dofs = [1, 2, 5, 6]
+fixed_dofs = [0, 1, 4, 5]
 
 # loads applied: (x,y)
 f = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, -0.01]])
 
 
 def init_stiffness_matrix(nodes, elements):
+    """Creates the global K and N stiffness matrices given nodes and elements
+
+    Args:
+        nodes (np.array): (X,Y) coordinates of nodes
+        elements (np.array): (Node A, Node B, EA) Specifies elements
+
+    Returns:
+        (np.array, np.array): N,K
+    """
     m = np.size(elements, 0)
     n = np.size(nodes, 0)
     K = np.zeros([2 * n, 2 * n])  # stiffness matrix
@@ -75,7 +84,39 @@ def init_stiffness_matrix(nodes, elements):
         K[elements[i][1] * 2][elements[i][1] * 2 + 1] += K_el[2][3]
         K[elements[i][1] * 2 + 1][elements[i][1] * 2 + 1] += K_el[3][3]
 
-    print(np.array2string(K, 5000, formatter={"float_kind": lambda x: "%.5f" % x}))
+    return N, K
+
+
+def calc_nodal_positions(K):
+    """Calculates the position of nodes after loads are applied
+
+    Args:
+        K (np.array): Global stiffness matrix
+
+    Returns:
+        np.array: X and Y coordinates of each node after loads are applied
+    """
+    n = np.size(nodes, 0)
+    u = np.zeros([2 * n])
+    floating_nodes = np.setdiff1d(
+        range(0, 2 * n), fixed_dofs
+    )  # Nodes that are free to move
+
+    # Remove fixed rows/columns
+    K = np.delete(K, fixed_dofs, axis=0)
+    K = np.delete(K, fixed_dofs, axis=1)
+
+    u[floating_nodes] = np.matmul(f.flatten()[floating_nodes], np.linalg.inv(K))
+
+    # Format u into (x,y):
+    u_formatted = np.zeros([n, 2])
+    u_formatted[:, 0] = u[0:-1:2]
+    u_formatted[:, 1] = np.append(np.array(u[1:-2:2]), u[-1])
+    return u_formatted
+
+
+def print_array(arr):
+    print(np.array2string(arr, 5000, formatter={"float_kind": lambda x: "%.5f" % x}))
 
 
 def calc_distance(node_1, node_2):
@@ -105,7 +146,8 @@ def calc_angle(node_1, node_2):
 
 
 def main():
-    init_stiffness_matrix(nodes, elements)
+    N, K = init_stiffness_matrix(nodes, elements)
+    u = calc_nodal_positions(K)
 
 
 if __name__ == "__main__":
